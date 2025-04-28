@@ -4,16 +4,16 @@ Classify financial transactions as fraudulent or non-fraudulent
 
 **Author:** Dipti Srivastava
 
-### Executive Summary
+## Executive Summary
 
 This project uses supervised machine learning to predict whether a financial transaction is fraudulent. The goal is to build models that can assist financial institutions in identifying suspicious activity with high precision and recall — ultimately reducing fraud losses while minimizing false positives for legitimate users.
 
-### Rationale
+## Rationale
 
 Financial fraud is a growing global concern, costing billions each year. By leveraging machine learning, businesses can proactively identify patterns in fraudulent behavior and intervene earlier. The challenge lies in detecting rare fraudulent cases hidden among massive volumes of legitimate transactions, with minimal disruption to customer experience.
 
 
-### Research Question
+## Research Question
 
 > **Can we accurately classify financial transactions as fraudulent or non-fraudulent using machine learning models?**
 
@@ -24,9 +24,9 @@ Financial fraud is a growing global concern, costing billions each year. By leve
   
 This dataset includes anonymized transaction data with engineered features including device type, card information, and email domains. The target variable is `isFraud`.
 
-### Methodology
+## Methodology
 
-#### 1. Exploratory Data Analysis (EDA)
+## I. Exploratory Data Analysis (EDA)
 
 - Assessed dataset shape, data types, and cardinality of features.
 - Visualized missing data using heatmaps and computed missing value % per feature.
@@ -36,33 +36,36 @@ This dataset includes anonymized transaction data with engineered features inclu
   - Email domains and operating systems
   - Temporal patterns using `TransactionDT` for transaction hour/day analysis
 
-#### Initial EDA Findings based on RAW data
+## Initial EDA Findings based on RAW data
 
-##### Key Observations
+### Key Observations
 
 1. **Target Variable Imbalance (`isFraud`)**
    - Highly imbalanced: ~99.8% non-fraud vs ~0.2% fraud.
    - Will require class balancing strategies (e.g., SMOTE or `class_weight='balanced'`).
 
-   ![Target Class Imbalance](/images/Fraud-vs-NonFraud.png)
+   <img src="images/Fraud-vs-NonFraud.png" alt="Target Class Imbalance" width="500"/>
 
 2. **Missing Values**
    - Over 200 features have missing data, especially among `id_`, `D_`, and `V_` columns.
    - Some features (e.g., `id_12`, `id_13`, `V300+`) have >90% missing values.
    - Missingness matrix reveals structured patterns—some columns may be worth keeping despite missingness.
+     
 ![Top 50 Missing Values by Column](/images/Top%20N%20Missing%20Values%20by%20Column.png)
 3. **Numeric Feature Distributions**
    - `TransactionAmt`, `id_02`, and `D15` show heavy right skew and possible outliers.
    - Fraudulent transactions cluster at lower transaction amounts.
+     
 ![Numeric Feature Distributions](/images/Numeric%20Feature%20Distributions%20by%20Fraud%20Label.png)
 4. **Categorical Features**
    - Some categorical variables (`ProductCD`, `card4`, `card6`) show variation by fraud class.
    - Fields like `DeviceType`, `id_30`, and `id_31` contain `"unknown"` and `"NotFound"` entries—these may be fraud indicators.
    - Some categories are heavily imbalanced, and will require careful encoding.
+     
 ![Categorical Features](/images/Categorical%20Feature%20Distribution%20by%20Fraud%20Label.png)
 
 
-##### Recommendations Based on EDA
+### Recommendations Based on EDA
 
 | Area                     | Recommendation                                                                 |
 |--------------------------|----------------------------------------------------------------------------------|
@@ -73,7 +76,7 @@ This dataset includes anonymized transaction data with engineered features inclu
 | Temporal Features        | Engineer features from `TransactionDT`: hour, day, weekday.                     |
 | Device/Browser Info      | Investigate `id_30`, `id_31`, and `DeviceType` for fraud patterns.              |
 
-#### 2. Feature Engineering
+## II. Feature Engineering
 
 - Created time-based features:
   - `TransactionHour`, `TransactionDay`, and `TransactionWeekday` from `TransactionDT`
@@ -104,18 +107,18 @@ This dataset includes anonymized transaction data with engineered features inclu
    - Extracted temporal features: `TransactionHour`, `TransactionDay`, `TransactionWeekday`.
    - These new features allow the model to detect **fraud patterns based on time-of-day or day-of-week**.
 
-##### Feature Correlation Check
+#### Feature Correlation Check
 ![Feature Correlation](/images/Feature%20Correlation%20Check.png)
 
-We computed a correlation matrix on all selected features to detect highly correlated (redundant) pairs. A threshold of 0.9 was used to identify problematic correlations.
+**We computed a correlation matrix on all selected features to detect highly correlated (redundant) pairs. A threshold of 0.9 was used to identify problematic correlations.**
 
-**Result:** No pairs exceeded 0.9 correlation.
+**Result: No pairs exceeded 0.9 correlation.**
 
 This means:
 - All selected features provide unique or complementary signal.
-- We will retain the full feature set (`feature_cols`) for baseline modeling.
+- We will retain the following feature set for baseline modeling.
 
-#### Final Feature Set for Modeling
+### Final Feature Set for Modeling
 
 | Feature Name            | Feature Type       | Notes/Description                                  |
 |--------------------------|--------------------|----------------------------------------------------|
@@ -138,7 +141,7 @@ This means:
 | id_33_missing_flag       | Binary Flag         | Missing flag for `id_33` (if available)             |
 
 
-#### 3. Modeling
+## III. Modeling
 
 - **Class imbalance handling**:
   - Used **SMOTE** oversampling for Logistic Regression
@@ -151,9 +154,16 @@ This means:
 - **Feature preprocessing**:
   - Imputed missing values with `SimpleImputer(strategy='median')`
   - Standardized numerical features for Logistic Regression using `StandardScaler`
-![CF-LR](/images/Confusion%20Matrix%20-%20LR.png) ![CF-RF](/images/Confusion%20Matrix%20-%20RF.png)
+    
+<p align="center">
+  <img src="images/Confusion%20Matrix%20-%20LR.png" alt="Confusion Matrix - Logistic Regression" width="500"/>
+  <img src="images/Confusion%20Matrix%20-%20RF.png" alt="Confusion Matrix - Random Forest" width="500"/>
+</p>
 
-#### 4. Evaluation
+<p align="center"><b>Confusion Matrices: Logistic Regression vs Random Forest</b></p>
+
+
+## IV. Evaluation
 
 - Computed:
   - Accuracy, Precision, Recall, F1-score, ROC-AUC
@@ -179,26 +189,26 @@ Logistic Regression performed well with SMOTE it has better recall on minority c
 Random Forest had slightly better ROC-AUC and overall F1 score.
 Next steps: Tune hyperparameters, try gradient boosting (XGBoost/LightGBM), and add feature importance analysis
 
-### Results
+## Results
 
 | Model               | Precision (Fraud) | Recall (Fraud) | ROC-AUC |
 |--------------------|-------------------|----------------|---------|
 | Logistic Regression (SMOTE) | 8%               | **61%**         | 0.74    |
 | Random Forest (weighted)    | **92%**           | 31%            | **0.89** |
 
-### Insights:
+## Insights:
 - **Logistic Regression** catches more fraud but with many false alarms.
 - **Random Forest** is more precise but misses more fraud.
 - Logistic is better when **recall matters most** (e.g., catching fraud at all costs).
 - Random Forest is better when **precision matters** (e.g., avoid flagging good customers).
 
-### Business Takeaway:
+## Business Takeaway:
 The right model depends on risk tolerance:
 - Want to **catch more fraud** even if noisy? Use Logistic Regression.
 - Want to **flag fraud only when you're confident?** Use Random Forest.
 
 
-### Next Steps
+## Next Steps
 
 - Add advanced models: **XGBoost**
 - Perform **hyperparameter tuning** and **cross-validation**
@@ -213,10 +223,12 @@ The right model depends on risk tolerance:
 
 ### Contact and Further Information
 
-For more information or collaboration, please contact:  
-📧 [Email] (dsrivast@gmail.com) 
-🌐 [LinkedIn](https://linkedin.com/in/yourprofile)  
-🐦 [Twitter](https://twitter.com/yourhandle)
+For more information or collaboration, please contact:
+
+- 📧 [Email -Dipti](mailto:dsrivast@gmail.com)
+- 🌐 [LinkedIn – Dipti Srivastava](https://linkedin.com/in/diptishrivastav)
+- 🐦 [Twitter – @dsrivast](https://twitter.com/dsrivast)
+
 
 
 *Built as part of a capstone project to showcase applied ML skills in a high-impact financial context.*
